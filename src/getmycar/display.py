@@ -13,6 +13,11 @@ from getmycar.parser import Vehicle
 _DEFAULT_CONSOLE = Console()
 
 
+def _effective_price(v: Vehicle) -> int | None:
+    """支払総額 if known, else fall back to 車両本体価格."""
+    return v.price_man if v.price_man is not None else v.base_price_man
+
+
 def _price_style(price_man: int | None) -> str:
     if price_man is None:
         return "dim"
@@ -53,7 +58,7 @@ def _build_vehicle_table(vehicles: Iterable[Vehicle], title: str) -> Table:
             v.title,
             _format_year(v.year),
             _format_mileage(v.mileage_km),
-            f"[{_price_style(v.price_man)}]{_format_price(v.price_man)}[/]",
+            f"[{_price_style(_effective_price(v))}]{_format_price(_effective_price(v))}[/]",
             v.location or "-",
         )
     return table
@@ -79,7 +84,7 @@ def display_vehicle_detail(vehicle: Vehicle, *, console: Console = _DEFAULT_CONS
         f"ID:       {vehicle.id}\n"
         f"年式:     {_format_year(vehicle.year)}\n"
         f"走行距離: {_format_mileage(vehicle.mileage_km)}\n"
-        f"価格:     [{_price_style(vehicle.price_man)}]{_format_price(vehicle.price_man)}[/]\n"
+        f"価格:     [{_price_style(_effective_price(vehicle))}]{_format_price(_effective_price(vehicle))}[/]\n"
         f"地域:     {vehicle.location or '-'}\n"
         f"URL:      {vehicle.url}"
     )
@@ -97,7 +102,7 @@ def display_comparison(vehicles: list[Vehicle], *, console: Console = _DEFAULT_C
         ("走行距離", [_format_mileage(v.mileage_km) for v in vehicles]),
         (
             "価格",
-            [f"[{_price_style(v.price_man)}]{_format_price(v.price_man)}[/]" for v in vehicles],
+            [f"[{_price_style(_effective_price(v))}]{_format_price(_effective_price(v))}[/]" for v in vehicles],
         ),
         ("地域", [v.location or "-" for v in vehicles]),
     ]

@@ -1,7 +1,9 @@
 """Carsensor HTML parser.
 
 Selectors are encoded as module constants so they can be tweaked centrally
-when Carsensor's markup changes.
+when Carsensor's markup changes. They were calibrated against live
+``/usedcar/bXX/sYYY/index.html`` and ``/usedcar/detail/AU<id>/index.html``
+pages — see tests/fixtures/carsensor_*.html.
 """
 
 from __future__ import annotations
@@ -17,8 +19,12 @@ from getmycar.logging import get_logger
 
 _log = get_logger(__name__)
 
-_SEARCH_ITEM_SELECTOR: Final = "div.casseteMain__wrap"
-_DETAIL_ROOT_SELECTOR: Final = "div.detailMain"
+# Search results: each car listing is a `cassette js_listTableCassette` wrapper
+# whose id is `<vehicle_id>_cas`. It contains a `cassetteMain` (price, year,
+# mileage, etc.) and a sibling `cassetteSub` (shop area).
+_RESULT_WRAPPER: Final = "div.cassette.js_listTableCassette"
+
+_BASE_HOST: Final = "https://www.carsensor.net"
 
 
 @dataclass(frozen=True)
@@ -26,7 +32,8 @@ class Vehicle:
     id: str
     title: str
     url: str
-    price_man: int | None = None
+    price_man: int | None = None  # 支払総額(万円)
+    base_price_man: int | None = None  # 車両本体価格(万円)
     year: int | None = None
     mileage_km: int | None = None
     location: str | None = None
@@ -35,50 +42,122 @@ class Vehicle:
 
 def parse_search_results(html: str) -> list[Vehicle]:
     soup = BeautifulSoup(html, "html.parser")
-    items = soup.select(_SEARCH_ITEM_SELECTOR)
+    items = soup.select(_RESULT_WRAPPER)
     if not items:
         raise ParseError("no vehicle items found in search results HTML")
-    return [_vehicle_from_search_item(item) for item in items]
+    return [_vehicle_from_cassette(item) for item in items]
 
 
 def parse_detail(html: str) -> Vehicle:
     soup = BeautifulSoup(html, "html.parser")
-    root = soup.select_one(_DETAIL_ROOT_SELECTOR)
-    if root is None:
-        raise ParseError("detail root not found")
-    vehicle_id = root.get("data-vehicle-id")
-    title = _text(root.select_one("h1.detailTitle"))
-    if not vehicle_id or not title:
-        raise ParseError("detail page missing id or title")
+    h1 = soup.select_one("h1.title1")
+    if h1 is None:
+        raise ParseError("detail page missing h1.title1")
+    title = h1.get_text(" ", strip=True)
+    vehicle_id = _extract_id_from_anywhere(html)
+    if not vehicle_id:
+        raise ParseError("could not extract vehicle id from detail page")
     return Vehicle(
-        id=str(vehicle_id),
+        id=vehicle_id,
         title=title,
-        url="",
-        price_man=_parse_price(_text(root.select_one("p.detailPrice .totalPrice"))),
-        year=_parse_int(_text(root.select_one(".js-modelYear"))),
-        mileage_km=_parse_mileage(_text(root.select_one(".js-mileage"))),
-        location=_text(root.select_one(".js-shopArea")) or None,
-        image_url=_attr(root.select_one("img.hero"), "src"),
+        url=f"{_BASE_HOST}/usedcar/detail/{vehicle_id}/index.html",
+        year=_parse_int(_spec_value(soup, "年式")),
+        mileage_km=_parse_mileage(_spec_value(soup, "走行距離") + "万km"),
     )
 
 
 # --- helpers ---------------------------------------------------------
 
 
-def _vehicle_from_search_item(item: Tag) -> Vehicle:
-    title_el = item.select_one("a.title")
-    if title_el is None:
-        raise ParseError("search item missing title link")
-    return Vehicle(
-        id=str(item.get("data-vehicle-id", "")),
-        title=_text(title_el),
-        url=_attr(title_el, "href") or "",
-        price_man=_parse_price(_text(item.select_one(".basePrice .totalPrice"))),
-        year=_parse_int(_text(item.select_one(".js-modelYear"))),
-        mileage_km=_parse_mileage(_text(item.select_one(".js-mileage"))),
-        location=_text(item.select_one(".js-shopArea")) or None,
-        image_url=_attr(item.select_one("img.thumb"), "src"),
+def _vehicle_from_cassette(item: Tag) -> Vehicle:
+    raw_id = item.get("id", "")
+    vehicle_id = (
+        str(raw_id)[:-4] if isinstance(raw_id, str) and raw_id.endswith("_cas") else str(raw_id)
     )
+    title_link = item.select_one("h3.cassetteMain__title a")
+    if title_link is None:
+        raise ParseError(f"cassette {vehicle_id} missing title link")
+    title = title_link.get_text(" ", strip=True)
+    href = _attr(title_link, "href") or ""
+    return Vehicle(
+        id=vehicle_id,
+        title=title,
+        url=f"{_BASE_HOST}{href}" if href.startswith("/") else href,
+        price_man=_parse_combined_price(
+            item.select_one(".totalPrice__mainPriceNum"),
+            item.select_one(".totalPrice__subPriceNum"),
+        ),
+        base_price_man=_parse_combined_price(
+            item.select_one(".basePrice__mainPriceNum"),
+            item.select_one(".basePrice__subPriceNum"),
+        ),
+        year=_parse_int(_text(_spec_box_value(item, "年式"))),
+        mileage_km=_parse_mileage_from_spec_box(item, "走行距離"),
+        location=_text(item.select_one(".cassetteSub__area p")) or None,
+        image_url=_first_noscript_img(item),
+    )
+
+
+def _spec_box_value(item: Tag, label: str) -> Tag | None:
+    """Find the ``specList__data`` block whose preceding title equals *label*."""
+    for box in item.select(".specList__detailBox"):
+        title = box.select_one(".specList__title")
+        if title and label in title.get_text(strip=True):
+            data = box.select_one(".specList__emphasisData")
+            return data if data is not None else box.select_one(".specList__data")
+    return None
+
+
+def _parse_mileage_from_spec_box(item: Tag, label: str) -> int | None:
+    """The spec box renders e.g. ``<emphasis>2</emphasis>万km``."""
+    for box in item.select(".specList__detailBox"):
+        title = box.select_one(".specList__title")
+        if title and label in title.get_text(strip=True):
+            data = box.select_one(".specList__data")
+            if data is not None:
+                return _parse_mileage(data.get_text(strip=True))
+    return None
+
+
+def _spec_value(soup: BeautifulSoup, label: str) -> str:
+    """For the detail page's specWrap__box layout."""
+    for box in soup.select(".specWrap__box"):
+        title = box.select_one(".specWrap__box__title")
+        if title and label in title.get_text(strip=True):
+            num = box.select_one(".specWrap__box__num")
+            if num is not None:
+                return num.get_text(strip=True)
+    return ""
+
+
+def _parse_combined_price(main: Tag | None, sub: Tag | None) -> int | None:
+    """``<span main>323</span><span sub>.9</span>`` → 324 (rounded)."""
+    if main is None:
+        return None
+    main_text = main.get_text(strip=True)
+    sub_text = sub.get_text(strip=True) if sub is not None else ""
+    try:
+        value = float(main_text + (sub_text if sub_text.startswith(".") else ""))
+    except ValueError:
+        return None
+    return round(value)
+
+
+def _first_noscript_img(item: Tag) -> str | None:
+    ns = item.find("noscript")
+    if ns is None:
+        return None
+    img = BeautifulSoup(ns.decode_contents(), "html.parser").find("img")
+    if img is None:
+        return None
+    src = img.get("src")
+    if src is None:
+        return None
+    if isinstance(src, list):
+        src = " ".join(src)
+    if src.startswith("//"):
+        return f"https:{src}"
+    return src
 
 
 def _text(tag: Tag | None) -> str:
@@ -99,14 +178,8 @@ def _parse_int(text: str) -> int | None:
     return int(m.group()) if m else None
 
 
-def _parse_price(text: str) -> int | None:
-    if not text or "応談" in text:
-        return None
-    return _parse_int(text)
-
-
 def _parse_mileage(text: str) -> int | None:
-    """Convert e.g. '5.2万km' to 52000. Returns None if unparseable."""
+    """Convert e.g. '2万km' or '5.2万km' to km. Returns None if unparseable."""
     if not text or "不明" in text:
         return None
     m = re.search(r"([\d.]+)\s*万", text)
@@ -116,6 +189,17 @@ def _parse_mileage(text: str) -> int | None:
     if m:
         try:
             return int(m.group(1).replace(",", ""))
-        except ValueError:  # pragma: no cover - defensive
+        except ValueError:  # pragma: no cover
             return None
     return None
+
+
+def _extract_id_from_anywhere(html: str) -> str:
+    m = re.search(r"/usedcar/detail/(AU\d+)/", html)
+    if m:
+        return m.group(1)
+    m = re.search(r'data-vehicle-id="(AU\d+)"', html)
+    if m:
+        return m.group(1)
+    m = re.search(r"\bAU\d{8,}\b", html)
+    return m.group(0) if m else ""

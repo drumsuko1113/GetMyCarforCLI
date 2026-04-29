@@ -19,7 +19,7 @@ class _FakeScraper:
         return self._body
 
 
-_SEARCH_HTML = (Path(__file__).parent / "fixtures" / "search_results.html").read_text(
+_SEARCH_HTML = (Path(__file__).parent / "fixtures" / "carsensor_search.html").read_text(
     encoding="utf-8"
 )
 
@@ -47,16 +47,16 @@ def test_search_renders_and_persists_last_results(
     assert result.exit_code == 0, result.output
     assert "プリウス" in result.output
     last = json.loads((tmp_path / "last_search.json").read_text(encoding="utf-8"))
-    assert any(item["id"] == "V001" for item in last)
+    assert any(item["id"] == "AU6877255381" for item in last)
 
 
 def test_favorites_add_then_list(base_obj: dict[str, object]) -> None:
     runner = CliRunner()
     runner.invoke(cli, ["search", "プリウス"], obj=base_obj)
-    add = runner.invoke(cli, ["favorites", "add", "V001"], obj=base_obj)
+    add = runner.invoke(cli, ["favorites", "add", "AU6877255381"], obj=base_obj)
     assert add.exit_code == 0, add.output
     listing = runner.invoke(cli, ["favorites", "list"], obj=base_obj)
-    assert "V001" in listing.output
+    assert "AU6877255381" in listing.output
 
 
 def test_favorites_add_unknown_id_errors(base_obj: dict[str, object]) -> None:
@@ -68,20 +68,22 @@ def test_favorites_add_unknown_id_errors(base_obj: dict[str, object]) -> None:
 def test_favorites_remove(base_obj: dict[str, object]) -> None:
     runner = CliRunner()
     runner.invoke(cli, ["search", "x"], obj=base_obj)
-    runner.invoke(cli, ["favorites", "add", "V001"], obj=base_obj)
-    runner.invoke(cli, ["favorites", "remove", "V001"], obj=base_obj)
+    runner.invoke(cli, ["favorites", "add", "AU6877255381"], obj=base_obj)
+    runner.invoke(cli, ["favorites", "remove", "AU6877255381"], obj=base_obj)
     listing = runner.invoke(cli, ["favorites", "list"], obj=base_obj)
-    assert "V001" not in listing.output
+    assert "AU6877255381" not in listing.output
 
 
 def test_favorites_compare(base_obj: dict[str, object]) -> None:
     runner = CliRunner()
     runner.invoke(cli, ["search", "x"], obj=base_obj)
-    runner.invoke(cli, ["favorites", "add", "V001"], obj=base_obj)
-    runner.invoke(cli, ["favorites", "add", "V002"], obj=base_obj)
-    result = runner.invoke(cli, ["favorites", "compare", "V001", "V002"], obj=base_obj)
+    runner.invoke(cli, ["favorites", "add", "AU6877255381"], obj=base_obj)
+    runner.invoke(cli, ["favorites", "add", "AU6869806001"], obj=base_obj)
+    result = runner.invoke(
+        cli, ["favorites", "compare", "AU6877255381", "AU6869806001"], obj=base_obj
+    )
     assert result.exit_code == 0, result.output
-    assert "V001" in result.output and "V002" in result.output
+    assert "AU6877255381" in result.output and "AU6869806001" in result.output
 
 
 def test_favorites_compare_unknown_id_errors(base_obj: dict[str, object]) -> None:
@@ -110,7 +112,7 @@ def test_preset_load_emits_url(base_obj: dict[str, object]) -> None:
     )
     result = runner.invoke(cli, ["preset", "load", "cheap"], obj=base_obj)
     assert result.exit_code == 0
-    assert "PRICE_MAX=200" in result.output
+    assert "PMAX=200" in result.output
 
 
 def test_cache_clear_does_not_error(base_obj: dict[str, object]) -> None:
