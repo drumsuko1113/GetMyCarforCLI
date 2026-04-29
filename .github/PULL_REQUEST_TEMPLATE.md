@@ -5,7 +5,7 @@
 Closes #
 
 ## 変更内容
-- 
+-
 
 ## 完了条件チェック (CLAUDE.md 準拠)
 - [ ] `pytest tests/ -v` 全件 PASS
