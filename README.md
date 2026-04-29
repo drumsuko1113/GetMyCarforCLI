@@ -36,9 +36,11 @@ chcp 65001
 
 ## 基本コマンド
 
+`getmycar` と `mycar` の 2 つのコマンド名が同じ CLI を起動します（短縮形）。
+
 ```powershell
 # 検索
-getmycar search プリウス --price-max 200 --year-min 2018 --sort price_asc
+mycar search プリウス --price-max 200 --year-min 2018 --sort price_asc
 
 # お気に入り (ID は直前の search 結果から参照される)
 getmycar favorites add V001

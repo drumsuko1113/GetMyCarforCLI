@@ -33,6 +33,7 @@ dev = [
 
 [project.scripts]
 getmycar = "getmycar.main:cli"
+mycar = "getmycar.main:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/getmycar"]
