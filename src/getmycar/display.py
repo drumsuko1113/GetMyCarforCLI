@@ -102,7 +102,10 @@ def display_comparison(vehicles: list[Vehicle], *, console: Console = _DEFAULT_C
         ("走行距離", [_format_mileage(v.mileage_km) for v in vehicles]),
         (
             "価格",
-            [f"[{_price_style(_effective_price(v))}]{_format_price(_effective_price(v))}[/]" for v in vehicles],
+            [
+                f"[{_price_style(_effective_price(v))}]{_format_price(_effective_price(v))}[/]"
+                for v in vehicles
+            ],
         ),
         ("地域", [v.location or "-" for v in vehicles]),
     ]
