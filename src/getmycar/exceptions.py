@@ -3,6 +3,7 @@
 All custom exceptions derive from :class:`GetMyCarError` so call sites can
 catch the whole family with a single ``except``.
 """
+
 from __future__ import annotations
 
 

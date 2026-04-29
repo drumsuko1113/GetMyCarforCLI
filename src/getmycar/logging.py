@@ -1,4 +1,5 @@
 """Centralized logging setup using Rich for console output."""
+
 from __future__ import annotations
 
 import logging

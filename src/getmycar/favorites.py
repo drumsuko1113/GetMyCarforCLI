@@ -1,4 +1,5 @@
 """Persistence for the favorites list and the saved search presets."""
+
 from __future__ import annotations
 
 import json
@@ -24,9 +25,7 @@ def _read_json(path: Path) -> Any:
 def _write_json(path: Path, data: Any) -> None:
     ensure_dir(path.parent)
     try:
-        path.write_text(
-            json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     except OSError as e:
         raise RepositoryError(f"failed to write {path}: {e}") from e
 

@@ -1,9 +1,11 @@
 """CLI entry point. Wires Model and View; contains no business logic."""
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 import click
 
@@ -57,8 +59,8 @@ def _last_search_store(ctx: click.Context) -> LastSearchStore:
 @click.pass_context
 def cli(
     ctx: click.Context,
-    config_path: Optional[Path],
-    data_dir: Optional[Path],
+    config_path: Path | None,
+    data_dir: Path | None,
     verbose: int,
 ) -> None:
     """getmycar - Carsensor scraping CLI."""
@@ -99,9 +101,7 @@ def _add_search_options(f: Callable[..., Any]) -> Callable[..., Any]:
     return f
 
 
-def _criteria_from_kwargs(
-    keyword: Optional[str], cfg: Config, **kw: Any
-) -> SearchCriteria:
+def _criteria_from_kwargs(keyword: str | None, cfg: Config, **kw: Any) -> SearchCriteria:
     return SearchCriteria(
         keyword=keyword,
         maker=kw.get("maker"),
@@ -122,7 +122,7 @@ def _criteria_from_kwargs(
 @click.argument("keyword", required=False)
 @_add_search_options
 @click.pass_context
-def search(ctx: click.Context, /, keyword: Optional[str], **kw: Any) -> None:
+def search(ctx: click.Context, /, keyword: str | None, **kw: Any) -> None:
     """Search Carsensor and display matching vehicles."""
     cfg: Config = ctx.obj["config"]
     criteria = _criteria_from_kwargs(keyword, cfg, **kw)
@@ -151,9 +151,7 @@ def favorites() -> None:
 def favorites_add(ctx: click.Context, vehicle_id: str) -> None:
     vehicle = _last_search_store(ctx).find(vehicle_id)
     if vehicle is None:
-        raise click.ClickException(
-            f"vehicle id {vehicle_id} not found in last search results"
-        )
+        raise click.ClickException(f"vehicle id {vehicle_id} not found in last search results")
     _favorites_repo(ctx).add(vehicle)
     click.echo(f"added {vehicle_id}")
 
@@ -209,9 +207,7 @@ def preset() -> None:
 @click.argument("keyword", required=False)
 @_add_search_options
 @click.pass_context
-def preset_save(
-    ctx: click.Context, /, name: str, keyword: Optional[str], **kw: Any
-) -> None:
+def preset_save(ctx: click.Context, /, name: str, keyword: str | None, **kw: Any) -> None:
     cfg: Config = ctx.obj["config"]
     criteria = _criteria_from_kwargs(keyword, cfg, **kw)
     _presets_repo(ctx).save(name, criteria)

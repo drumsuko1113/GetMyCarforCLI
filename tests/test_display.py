@@ -30,7 +30,9 @@ def _capture(fn, *args, **kwargs) -> str:  # type: ignore[no-untyped-def]
 
 
 def test_search_results_show_titles_and_prices() -> None:
-    out = _capture(display_search_results, [_vehicle("V1", "プリウス", 120), _vehicle("V2", "フィット", 85)])
+    out = _capture(
+        display_search_results, [_vehicle("V1", "プリウス", 120), _vehicle("V2", "フィット", 85)]
+    )
     assert "プリウス" in out
     assert "フィット" in out
     assert "120" in out

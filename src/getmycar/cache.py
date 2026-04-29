@@ -1,4 +1,5 @@
 """On-disk response cache with TTL semantics."""
+
 from __future__ import annotations
 
 import hashlib

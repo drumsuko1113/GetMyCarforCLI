@@ -79,17 +79,13 @@ def test_favorites_compare(base_obj: dict[str, object]) -> None:
     runner.invoke(cli, ["search", "x"], obj=base_obj)
     runner.invoke(cli, ["favorites", "add", "V001"], obj=base_obj)
     runner.invoke(cli, ["favorites", "add", "V002"], obj=base_obj)
-    result = runner.invoke(
-        cli, ["favorites", "compare", "V001", "V002"], obj=base_obj
-    )
+    result = runner.invoke(cli, ["favorites", "compare", "V001", "V002"], obj=base_obj)
     assert result.exit_code == 0, result.output
     assert "V001" in result.output and "V002" in result.output
 
 
 def test_favorites_compare_unknown_id_errors(base_obj: dict[str, object]) -> None:
-    result = CliRunner().invoke(
-        cli, ["favorites", "compare", "ZZZ"], obj=base_obj
-    )
+    result = CliRunner().invoke(cli, ["favorites", "compare", "ZZZ"], obj=base_obj)
     assert result.exit_code != 0
 
 

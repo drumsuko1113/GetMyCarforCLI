@@ -1,4 +1,5 @@
 """Cross-cutting helpers shared across modules."""
+
 from __future__ import annotations
 
 from pathlib import Path
