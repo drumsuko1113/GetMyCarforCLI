@@ -1,0 +1,39 @@
+name: Bug report
+description: 不具合の報告
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きたか 1〜2 文で
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1. `getmycar search ...`
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の挙動 (エラーメッセージやスタックトレースを含めてください)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: getmycar / Python / OS バージョン
+      placeholder: "0.0.1 / 3.12 / Windows 11"
+    validations:
+      required: true

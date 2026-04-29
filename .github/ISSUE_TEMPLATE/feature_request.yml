@@ -1,0 +1,24 @@
+name: Feature request
+description: 新機能や改善の提案
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 動機 / 解決したい問題
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案する仕様
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 検討した代替案
+  - type: textarea
+    id: additional
+    attributes:
+      label: 補足
