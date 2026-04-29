@@ -3,6 +3,7 @@
 Uses ``responses`` to stub out HTTP so no real network access happens.
 This wires every layer (scraper, parser, repos, display, CLI) together.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -24,12 +25,8 @@ def search_html() -> str:
 
 
 @responses.activate
-def test_full_flow_search_then_favorite_then_compare(
-    tmp_path: Path, search_html: str
-) -> None:
-    responses.add(
-        responses.GET, "https://www.carsensor.net/robots.txt", body=_ROBOTS_OK
-    )
+def test_full_flow_search_then_favorite_then_compare(tmp_path: Path, search_html: str) -> None:
+    responses.add(responses.GET, "https://www.carsensor.net/robots.txt", body=_ROBOTS_OK)
     # match any usedcar/search.php URL — the search command builds query params dynamically
     responses.add(
         responses.GET,

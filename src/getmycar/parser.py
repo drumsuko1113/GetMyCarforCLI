@@ -3,11 +3,12 @@
 Selectors are encoded as module constants so they can be tweaked centrally
 when Carsensor's markup changes.
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Final, Optional
+from typing import Final
 
 from bs4 import BeautifulSoup, Tag
 
@@ -25,11 +26,11 @@ class Vehicle:
     id: str
     title: str
     url: str
-    price_man: Optional[int] = None
-    year: Optional[int] = None
-    mileage_km: Optional[int] = None
-    location: Optional[str] = None
-    image_url: Optional[str] = None
+    price_man: int | None = None
+    year: int | None = None
+    mileage_km: int | None = None
+    location: str | None = None
+    image_url: str | None = None
 
 
 def parse_search_results(html: str) -> list[Vehicle]:
@@ -84,7 +85,7 @@ def _text(tag: Tag | None) -> str:
     return tag.get_text(strip=True) if tag is not None else ""
 
 
-def _attr(tag: Tag | None, name: str) -> Optional[str]:
+def _attr(tag: Tag | None, name: str) -> str | None:
     if tag is None:
         return None
     value = tag.get(name)
@@ -93,18 +94,18 @@ def _attr(tag: Tag | None, name: str) -> Optional[str]:
     return value if isinstance(value, str) else " ".join(value)
 
 
-def _parse_int(text: str) -> Optional[int]:
+def _parse_int(text: str) -> int | None:
     m = re.search(r"\d+", text)
     return int(m.group()) if m else None
 
 
-def _parse_price(text: str) -> Optional[int]:
+def _parse_price(text: str) -> int | None:
     if not text or "応談" in text:
         return None
     return _parse_int(text)
 
 
-def _parse_mileage(text: str) -> Optional[int]:
+def _parse_mileage(text: str) -> int | None:
     """Convert e.g. '5.2万km' to 52000. Returns None if unparseable."""
     if not text or "不明" in text:
         return None

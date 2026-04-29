@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import timedelta
 from pathlib import Path
-from typing import Iterator
 from unittest.mock import patch
 
 import pytest
@@ -30,9 +30,7 @@ def fast_sleep() -> Iterator[None]:
 @responses.activate
 def test_get_returns_body_and_caches_it(cache: FileCache, fast_sleep: None) -> None:
     responses.add(responses.GET, "https://www.carsensor.net/robots.txt", body=_ROBOTS_OK)
-    responses.add(
-        responses.GET, "https://www.carsensor.net/usedcar/", body="<html>ok</html>"
-    )
+    responses.add(responses.GET, "https://www.carsensor.net/usedcar/", body="<html>ok</html>")
     scraper = Scraper(cache=cache, request_interval=0, max_retries=2)
     body = scraper.get("https://www.carsensor.net/usedcar/")
     assert body == b"<html>ok</html>"

@@ -1,9 +1,10 @@
 """Search criteria, query construction, and the Filter strategy hierarchy."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Final, Optional, Protocol
+from typing import Final, Protocol
 from urllib.parse import urlencode
 
 _BASE_URL: Final = "https://www.carsensor.net/usedcar/search.php"
@@ -17,15 +18,15 @@ class Sort(str, Enum):
 
 @dataclass(frozen=True)
 class SearchCriteria:
-    keyword: Optional[str] = None
-    maker: Optional[str] = None
-    model: Optional[str] = None
-    price_min: Optional[int] = None
-    price_max: Optional[int] = None
-    year_min: Optional[int] = None
-    year_max: Optional[int] = None
-    mileage_max: Optional[int] = None
-    prefecture: Optional[str] = None
+    keyword: str | None = None
+    maker: str | None = None
+    model: str | None = None
+    price_min: int | None = None
+    price_max: int | None = None
+    year_min: int | None = None
+    year_max: int | None = None
+    mileage_max: int | None = None
+    prefecture: str | None = None
     sort: Sort = Sort.NEWEST
     page: int = 1
     per_page: int = 20
@@ -37,8 +38,8 @@ class Filter(Protocol):
 
 @dataclass(frozen=True)
 class PriceFilter:
-    min_man: Optional[int]
-    max_man: Optional[int]
+    min_man: int | None
+    max_man: int | None
 
     def apply(self, params: dict[str, str]) -> None:
         if self.min_man is not None:
@@ -49,8 +50,8 @@ class PriceFilter:
 
 @dataclass(frozen=True)
 class YearFilter:
-    min_year: Optional[int]
-    max_year: Optional[int]
+    min_year: int | None
+    max_year: int | None
 
     def apply(self, params: dict[str, str]) -> None:
         if self.min_year is not None:
@@ -61,7 +62,7 @@ class YearFilter:
 
 @dataclass(frozen=True)
 class MileageFilter:
-    max_km: Optional[int]
+    max_km: int | None
 
     def apply(self, params: dict[str, str]) -> None:
         if self.max_km is not None:
@@ -70,7 +71,7 @@ class MileageFilter:
 
 @dataclass(frozen=True)
 class LocationFilter:
-    prefecture: Optional[str]
+    prefecture: str | None
 
     def apply(self, params: dict[str, str]) -> None:
         if self.prefecture:
@@ -79,8 +80,8 @@ class LocationFilter:
 
 @dataclass(frozen=True)
 class MakerFilter:
-    maker: Optional[str]
-    model: Optional[str]
+    maker: str | None
+    model: str | None
 
     def apply(self, params: dict[str, str]) -> None:
         if self.maker:

@@ -96,6 +96,11 @@ dir = "./data"
 ```powershell
 pytest tests/ -v --cov=src
 mypy src/
+
+# pre-commit hooks (Ruff + mypy + 標準フック)
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
 ```
 
 ## ライセンス

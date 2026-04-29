@@ -1,4 +1,5 @@
 """HTTP scraping foundation: rate limiting, retries, robots.txt, cache integration."""
+
 from __future__ import annotations
 
 import time

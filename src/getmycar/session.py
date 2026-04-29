@@ -1,4 +1,5 @@
 """Persists the most recent search results so favorites can reference them by id."""
+
 from __future__ import annotations
 
 import json

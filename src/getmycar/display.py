@@ -1,7 +1,8 @@
 """Rich-based TUI views. Pure presentation — no scraping or persistence."""
+
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 from rich.console import Console
 from rich.panel import Panel
@@ -12,7 +13,7 @@ from getmycar.parser import Vehicle
 _DEFAULT_CONSOLE = Console()
 
 
-def _price_style(price_man: Optional[int]) -> str:
+def _price_style(price_man: int | None) -> str:
     if price_man is None:
         return "dim"
     if price_man < 100:
@@ -22,11 +23,11 @@ def _price_style(price_man: Optional[int]) -> str:
     return "red"
 
 
-def _format_price(price_man: Optional[int]) -> str:
+def _format_price(price_man: int | None) -> str:
     return f"{price_man}万円" if price_man is not None else "-"
 
 
-def _format_mileage(km: Optional[int]) -> str:
+def _format_mileage(km: int | None) -> str:
     if km is None:
         return "-"
     if km >= 10000:
@@ -34,7 +35,7 @@ def _format_mileage(km: Optional[int]) -> str:
     return f"{km}km"
 
 
-def _format_year(year: Optional[int]) -> str:
+def _format_year(year: int | None) -> str:
     return f"{year}" if year is not None else "-"
 
 
@@ -58,18 +59,14 @@ def _build_vehicle_table(vehicles: Iterable[Vehicle], title: str) -> Table:
     return table
 
 
-def display_search_results(
-    vehicles: list[Vehicle], *, console: Console = _DEFAULT_CONSOLE
-) -> None:
+def display_search_results(vehicles: list[Vehicle], *, console: Console = _DEFAULT_CONSOLE) -> None:
     if not vehicles:
         console.print("[dim]該当 0 件[/]")
         return
     console.print(_build_vehicle_table(vehicles, title=f"検索結果 ({len(vehicles)} 件)"))
 
 
-def display_favorites(
-    vehicles: list[Vehicle], *, console: Console = _DEFAULT_CONSOLE
-) -> None:
+def display_favorites(vehicles: list[Vehicle], *, console: Console = _DEFAULT_CONSOLE) -> None:
     if not vehicles:
         console.print("[dim]お気に入りはまだありません[/]")
         return
@@ -89,9 +86,7 @@ def display_vehicle_detail(vehicle: Vehicle, *, console: Console = _DEFAULT_CONS
     console.print(Panel(body, title="詳細", border_style="blue"))
 
 
-def display_comparison(
-    vehicles: list[Vehicle], *, console: Console = _DEFAULT_CONSOLE
-) -> None:
+def display_comparison(vehicles: list[Vehicle], *, console: Console = _DEFAULT_CONSOLE) -> None:
     table = Table(title="比較", show_lines=True)
     table.add_column("項目", style="bold", no_wrap=True)
     for v in vehicles:
@@ -102,10 +97,7 @@ def display_comparison(
         ("走行距離", [_format_mileage(v.mileage_km) for v in vehicles]),
         (
             "価格",
-            [
-                f"[{_price_style(v.price_man)}]{_format_price(v.price_man)}[/]"
-                for v in vehicles
-            ],
+            [f"[{_price_style(v.price_man)}]{_format_price(v.price_man)}[/]" for v in vehicles],
         ),
         ("地域", [v.location or "-" for v in vehicles]),
     ]
