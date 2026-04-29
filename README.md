@@ -104,6 +104,18 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+## リリース
+
+セマンティックバージョニングのタグを push すると、`.github/workflows/release.yml` が自動で wheel/sdist をビルドし GitHub Release に添付します。
+
+```powershell
+# CHANGELOG.md と src/getmycar/__init__.py の __version__ を更新してから
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+`CHANGELOG.md` の該当バージョン節が Release 本文に流し込まれます。
+
 ## ライセンス
 
 MIT
