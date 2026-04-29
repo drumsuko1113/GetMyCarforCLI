@@ -1,6 +1,7 @@
 # getmycar
 
 [![CI](https://github.com/drumsuko1113/GetMyCarforCLI/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/drumsuko1113/GetMyCarforCLI/actions/workflows/ci.yml)
+[![Security](https://github.com/drumsuko1113/GetMyCarforCLI/actions/workflows/security.yml/badge.svg?branch=develop)](https://github.com/drumsuko1113/GetMyCarforCLI/actions/workflows/security.yml)
 
 カーセンサー (https://www.carsensor.net) をスクレイピングし、Windows PowerShell ターミナル上で動作する中古車検索 CLI。
 
